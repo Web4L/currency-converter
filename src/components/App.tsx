@@ -23,7 +23,6 @@ function App() {
 	}
 
 	useEffect(() => {
-		// fetch from base url and give it an access key
 		window
 			.fetch(BASE_URL)
 			.then((res: Response) => res.json())
@@ -33,7 +32,11 @@ function App() {
 
 					const firstCurrency = Object.keys(data.rates)[0];
 
-					setCurrencyOptions([...Object.keys(data.rates)]);
+					setCurrencyOptions(
+						[...Object.keys(data.rates)].sort((a, b) => {
+							return data.rates[a] > data.rates[b] ? 1 : -1;
+						})
+					);
 					setFromCurrency(data.base);
 					setToCurrency(firstCurrency);
 					setExchangeRate(data.rates[firstCurrency]);
@@ -42,12 +45,17 @@ function App() {
 	}, []);
 
 	useEffect(() => {
-		if (fromCurrency == null || toCurrency == null) return;
-		fetch(`${BASE_URL}?base=${fromCurrency}&symbols=${toCurrency}`)
+		if (fromCurrency == undefined || toCurrency == undefined) return;
+		window
+			.fetch(BASE_URL)
 			.then((res: Response) => res.json())
-			.then((data: { rates: { [key: string]: number } }) => {
-				setExchangeRate(data.rates[toCurrency]);
-			});
+			.then(
+				(data: { rates: { [key: string]: number }; base?: string }) => {
+					setExchangeRate(
+						data.rates[toCurrency] / data.rates[fromCurrency]
+					);
+				}
+			);
 	}, [fromCurrency, toCurrency]);
 
 	function handleFromAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
